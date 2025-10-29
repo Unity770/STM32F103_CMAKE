@@ -9,7 +9,6 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
             "environment": {
-                "PATH": "${env:PATH}",
                 "ARM_GCC_TOOLCHAIN": "D:/programs/ARM_GCC/gcc-arm-none-eabi-10.3-2021.10-win32/gcc-arm-none-eabi-10.3-2021.10",
                 "NINJA_TOOLCHAIN": "D:/programs/ninja/ninja-win"
             },
