@@ -2,6 +2,7 @@
 ## 环境配置
 - 下载CMAKE并将路径添加到系统环境变量
 - 下载arm_gcc与ninja并添加到CmakePreset的environment；
+- 下载openocd并将路径添加到task.json
 ## 编译指令
 - 配置（仅生成构建系统）：
 ```powershell
@@ -15,3 +16,6 @@ cmake --preset Debug --build
 ```powershell
 cmake --build --preset Debug --target clean
 ```
+## 自动化任务
+  已配置vscode的自动化任务：
+  - build\clean\flash
