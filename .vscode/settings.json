@@ -1,3 +1,6 @@
 {
-    "cmake.allowCommentsInPresetsFile": true
+    "cmake.allowCommentsInPresetsFile": true,
+    "files.associations": {
+        "stm32f1xx_hal_uart.h": "c"
+    }
 }
