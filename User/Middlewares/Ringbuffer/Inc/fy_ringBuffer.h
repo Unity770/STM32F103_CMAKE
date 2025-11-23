@@ -33,19 +33,20 @@ struct ringBuffer {
     rb_unlock_fn_t unlock_write;
 
     /* operations (set to RB_Read / RB_Write by default) */
-    rb_read_fn_t read;
-    rb_write_fn_t write;
+    rb_read_fn_t read;//支持空指针，空指针只刷新buffr位置
+    rb_write_fn_t write;//支持空指针，空指针只刷新buffr位置
 
     /* lifecycle helpers */
     void (*init)(ringBuffer_t *rb, uint8_t *buffer, size_t size);
-    void (*deinit)(ringBuffer_t *rb);
+    void (*clear)(ringBuffer_t *rb);
+    uint16_t (*used)(ringBuffer_t *rb);
+    uint8_t * (*rb_head)(ringBuffer_t *rb);
+    uint8_t * (*rb_tail)(ringBuffer_t *rb);
 };
 
 /* Public API - implementations in Ringbuffer.c */
 void ringBuffer_init(ringBuffer_t *rb, uint8_t *buffer, size_t size);
-void ringBuffer_deinit(ringBuffer_t *rb);
-// size_t RB_Write(ringBuffer_t *rb, const uint8_t *src, size_t len);
-// size_t RB_Read(ringBuffer_t *rb, uint8_t *dst, size_t len);
+void ringBuffer_clear(ringBuffer_t *rb);
 void ringBuffer_registerLocks(ringBuffer_t *rb, rb_lock_fn_t l_r, rb_unlock_fn_t u_r, rb_lock_fn_t l_w, rb_unlock_fn_t u_w);
 
 /* Note: RB_NoLock is internal (not exposed here). */

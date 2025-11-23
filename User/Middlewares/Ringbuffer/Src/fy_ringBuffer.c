@@ -5,12 +5,24 @@
 #include "../../Ringbuffer/Inc/fy_ringBuffer.h"
 #include <string.h>
 
-static inline size_t rb_used(const ringBuffer_t *rb)
+void ringBuffer_clear(ringBuffer_t *rb);
+
+static size_t rb_used(const ringBuffer_t *rb)
 {
 	if (rb->head >= rb->tail) {
 		return rb->head - rb->tail;
 	}
 	return rb->size - (rb->tail - rb->head);
+}
+
+static uint8_t *rb_head(ringBuffer_t *rb)
+{
+    return &rb->buffer[rb->head];
+}
+
+static uint8_t *rb_tail(ringBuffer_t *rb)
+{
+    return &rb->buffer[rb->tail];
 }
 
 /* Default no-op lock (file-local) */
@@ -30,25 +42,29 @@ void ringBuffer_init(ringBuffer_t *rb, uint8_t *buffer, size_t size)
 	rb->read = RB_Read;
 	rb->write = RB_Write;
 	rb->init = ringBuffer_init;
-	rb->deinit = ringBuffer_deinit;
+	rb->clear = ringBuffer_clear;
 	rb->use_lock = 0;
+	rb->used = rb_used;
+	rb->rb_head = rb_head;
+	rb->rb_tail = rb_tail;
 }
 
-void ringBuffer_deinit(ringBuffer_t *rb)
+void ringBuffer_clear(ringBuffer_t *rb)
 {
 	if (rb == NULL) return;
-	rb->buffer = NULL;
-	rb->size = 0;
-	rb->head = rb->tail = 0;
-	// rb->lock_read = NULL;
-	// rb->unlock_read = NULL;
-	// rb->lock_write = NULL;
-	// rb->unlock_write = NULL;
-	// rb->read = NULL;
-	// rb->write = NULL;
-	// rb->init = NULL;
-	// rb->deinit = NULL;
-	// rb->use_lock = 0;
+	/* If locking is enabled, take both write and read locks to safely reset indices. */
+	if (rb->use_lock) {
+		rb->lock_write();
+		rb->lock_read();
+	}
+
+	rb->head = 0;
+	rb->tail = 0;
+
+	if (rb->use_lock) {
+		rb->unlock_read();
+		rb->unlock_write();
+	}
 }
 
 void ringBuffer_registerLocks(ringBuffer_t *rb, rb_lock_fn_t l_r, rb_unlock_fn_t u_r, rb_lock_fn_t l_w, rb_unlock_fn_t u_w)
@@ -78,12 +94,18 @@ size_t RB_Write(ringBuffer_t *rb, const uint8_t *src, size_t len)
 	/* first chunk until end of buffer */
 	size_t first = rb->size - rb->head;
 	if (first > to_write) first = to_write;
-	memcpy(&rb->buffer[rb->head], src, first);
+	if (src != NULL)
+	{
+		memcpy(&rb->buffer[rb->head], src, first);
+	}
 
 	/* second wrapped chunk */
 	size_t second = to_write - first;
 	if (second > 0) {
-		memcpy(&rb->buffer[0], src + first, second);
+		if (src != NULL)
+		{
+			memcpy(&rb->buffer[0], src + first, second);
+		}
 	}
 
 	rb->head = (rb->head + to_write) % rb->size;
@@ -105,11 +127,17 @@ size_t RB_Read(ringBuffer_t *rb, uint8_t *dst, size_t len)
 
 	size_t first = rb->size - rb->tail;
 	if (first > to_read) first = to_read;
-	memcpy(dst, &rb->buffer[rb->tail], first);
+	if (dst != NULL)
+	{
+		memcpy(dst, &rb->buffer[rb->tail], first);
+	}
 
 	size_t second = to_read - first;
 	if (second > 0) {
-		memcpy(dst + first, &rb->buffer[0], second);
+		if (dst != NULL)
+		{
+			memcpy(dst + first, &rb->buffer[0], second);
+		}
 	}
 
 	rb->tail = (rb->tail + to_read) % rb->size;
