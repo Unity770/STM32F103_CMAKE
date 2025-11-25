@@ -35,8 +35,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
-add_subdir
-ectory(cmake/stm32cubemx)
+add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -46,13 +45,17 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/Ringbuffer/Src/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/Ringbuffer/Src/fy_ringBuffer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Drivers/UART/Src/fy_uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/App/userMain.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/Ringbuffer/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Drivers/UART/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/App
 )
 
 # Add project symbols (macros)

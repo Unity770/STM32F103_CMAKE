@@ -19,3 +19,5 @@ cmake --build --preset Debug --target clean
 ## 自动化任务
   已配置vscode的自动化任务：
   - build\clean\flash
+## 注意事项
+- 不要直接包含HAL库的头文件，在 STM32 HAL 库中，所有的模块头文件（如 stm32f1xx_hal_uart.h）都应该通过 stm32f1xx_hal.h 统一包含，而 stm32f1xx_hal.h 会根据 stm32f1xx_hal_conf.h 中的配置来按正确的顺序包含所需的模块。

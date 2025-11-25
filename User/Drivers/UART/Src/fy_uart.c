@@ -18,7 +18,7 @@ static int register_uart_instance(fy_uart_t *uart)
     return -1;
 }
 
-static void unregister_uart_instance(fy_uart_t *uart)
+/*static void unregister_uart_instance(fy_uart_t *uart)
 {
     for (size_t i = 0; i < sizeof(uart_registry)/sizeof(uart_registry[0]); ++i) {
         if (uart_registry[i] == uart) {
@@ -26,7 +26,7 @@ static void unregister_uart_instance(fy_uart_t *uart)
             return;
         }
     }
-}
+}*/
 
 static fy_uart_t *find_uart_by_huart(UART_HandleTypeDef *huart)
 {
@@ -40,7 +40,7 @@ static fy_uart_t *find_uart_by_huart(UART_HandleTypeDef *huart)
 
 static void uart_try_transmit(fy_uart_t *uart)
 {
-    ringBuffer_t *rb = &uart->tx_rb;
+    ringBuffer_t *rb = uart->tx_rb;
     
     /* Check buffer count */
     size_t len_to_send = rb->used(rb);
@@ -48,9 +48,16 @@ static void uart_try_transmit(fy_uart_t *uart)
     /* Calculate contiguous data length from tail */
 
     if (len_to_send > 0) {
+        /* Fix: Ensure we don't read past the end of the physical buffer */
+        size_t contiguous_len = rb->size - rb->tail;
+        if (len_to_send > contiguous_len) {
+            len_to_send = contiguous_len;
+        }
+
         uart->tx_active_len = len_to_send;
         /* Call HAL_UART_Transmit_DMA */
-        HAL_UART_Transmit_DMA(uart->huart, rb->rb_tail, len_to_send);
+        const uint8_t *rb_tail = rb->rb_tail(rb);
+        HAL_UART_Transmit_DMA(uart->huart, rb_tail, len_to_send);
     }
 }
 /* HAL Callbacks -------------------------------------------------------------*/
@@ -60,7 +67,7 @@ static void fy_uart_tx_cplt_callback(UART_HandleTypeDef *huart)
     /* Look up fy_uart_t instance for this HAL handle */
     fy_uart_t *uart = find_uart_by_huart(huart);
     if (uart != NULL) {
-        ringBuffer_t *rb = &uart->tx_rb;
+        ringBuffer_t *rb = uart->tx_rb;
 
         /* Update tail for the remaining part */
         size_t half = uart->tx_active_len % 2 == 0?uart->tx_active_len/2:(uart->tx_active_len/2)+1;//dma奇数传输像上计算
@@ -78,7 +85,7 @@ static void fy_uart_tx_half_cplt_callback(UART_HandleTypeDef *huart)
 {
     fy_uart_t *uart = find_uart_by_huart(huart);
     if (uart != NULL) {
-        ringBuffer_t *rb = &uart->tx_rb;
+        ringBuffer_t *rb = uart->tx_rb;
 
         /* Update tail for the first half */
         size_t half = uart->tx_active_len % 2 == 0?uart->tx_active_len/2:(uart->tx_active_len/2)+1;//dma奇数传输像上计算
@@ -93,18 +100,18 @@ static void fy_uart_rx_cplt_callback(UART_HandleTypeDef *huart)
     fy_uart_t *uart = find_uart_by_huart(huart);
     if (uart != NULL) {
         /* Push received byte to ringbuffer */
-        uart->rx_rb->write(&uart->rx_rb, &uart->rx_temp_byte, 1);
+        uart->rx_rb->write(uart->rx_rb, &uart->rx_temp_byte, 1);
 
         /* Restart reception */
         HAL_UART_Receive_IT(huart, &uart->rx_temp_byte, 1);
     }
 }
-void fy_uart_tx(fy_uart_t *uart, const uint8_t *data, size_t len)
+uint16_t fy_uart_tx(fy_uart_t *uart, const uint8_t *data, size_t len)
 {
-    if (uart == NULL || data == NULL || len == 0) return;
+    if (uart == NULL || data == NULL || len == 0) return 0;
 
     /* 1. Put data into txbuffer (updates head) */
-    uart->tx_rb->write(&uart->tx_rb, data, len);
+    uint16_t tx_len = uart->tx_rb->write(uart->tx_rb, data, len);
 
     /* 2. Try to transmit if UART is ready */
     /* Check if DMA is not busy. HAL_UART_Transmit_DMA checks state internally 
@@ -112,12 +119,13 @@ void fy_uart_tx(fy_uart_t *uart, const uint8_t *data, size_t len)
     if (uart->huart->gState == HAL_UART_STATE_READY) {
         uart_try_transmit(uart);
     }
+    return tx_len;
 }
 
 uint16_t fy_uart_rx(fy_uart_t *fy_uart, uint8_t *out, size_t len)
 {
     if (fy_uart == NULL || out == NULL || len == 0) return 0;
-    return (uint16_t)fy_uart->rx_rb->read(&fy_uart->rx_rb, out, len);
+    return (uint16_t)fy_uart->rx_rb->read(fy_uart->rx_rb, out, len);
 }
 
 void fy_uart_clear_txRb(fy_uart_t *uart)
@@ -159,6 +167,7 @@ int32_t fy_uart_init(fy_uart_t *uart, UART_HandleTypeDef *huart, ringBuffer_t* r
 
     /* Start Reception */
     HAL_UART_Receive_IT(huart, &uart->rx_temp_byte, 1);
+    return 0;
 }
 
 

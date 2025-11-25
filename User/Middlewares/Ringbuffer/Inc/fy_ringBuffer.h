@@ -39,7 +39,7 @@ struct ringBuffer {
     /* lifecycle helpers */
     void (*init)(ringBuffer_t *rb, uint8_t *buffer, size_t size);
     void (*clear)(ringBuffer_t *rb);
-    uint16_t (*used)(ringBuffer_t *rb);
+    uint16_t (*used)(const ringBuffer_t *rb);
     uint8_t * (*rb_head)(ringBuffer_t *rb);
     uint8_t * (*rb_tail)(ringBuffer_t *rb);
 };
