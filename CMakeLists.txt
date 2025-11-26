@@ -48,6 +48,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/Ringbuffer/Src/fy_ringBuffer.c
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Drivers/UART/Src/fy_uart.c
     ${CMAKE_CURRENT_SOURCE_DIR}/User/App/userMain.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/easyLogger/elog.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/easyLogger/elog_utils.c
+
 )
 
 # Add include paths
@@ -56,6 +59,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/Ringbuffer/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Drivers/UART/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/User/App
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/easyLogger
 )
 
 # Add project symbols (macros)
