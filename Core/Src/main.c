@@ -99,8 +99,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    user_main();
+
     /* USER CODE BEGIN 3 */
+    user_main();
   }
   /* USER CODE END 3 */
 }
