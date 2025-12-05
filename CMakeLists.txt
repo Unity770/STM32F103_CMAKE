@@ -60,6 +60,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Drivers/UART/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/User/App
     ${CMAKE_CURRENT_SOURCE_DIR}/User/Middlewares/easyLogger
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/hardware/MPU6050
 )
 
 # Add project symbols (macros)
